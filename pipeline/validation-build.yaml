@@ -5,55 +5,27 @@ trigger:
     - master
 
 jobs:
-    - job: 'gradlew_build'
+    - job: 'mac_testing'
 
       pool:
           vmImage: 'macOS-10.14'
 
       steps:
-          - template: clone-src-with-deps.yaml
+          - template: test-appium-script.yaml
 
-          - task: Gradle@2
-            displayName: build and test dev ai-android service
-            inputs:
-              workingDirectory: '$(system.defaultWorkingDirectory)/AccessibilityInsightsForAndroidService'
-              gradleWrapperFile: 'AccessibilityInsightsForAndroidService/gradlew'
-              gradleOptions: '-Xmx3072m'
-              options: -S
-              javaHomeOption: 'JDKVersion'
-              jdkVersionOption: '1.8'
-              jdkArchitectureOption: 'x64'
-              publishJUnitResults: true
-              testResultsFiles: '**/TEST-*.xml'
-              tasks: 'build'
+    - job: 'ubuntu_testing'
 
-          - task: Bash@3
-            displayName: start emulator
-            inputs:
-              targetType: 'filePath'
-              filePath: $(System.DefaultWorkingDirectory)/pipeline/start-emulator.sh
-          
-          - task: NodeTool@0
-            inputs:
-                versionSpec: '12.13.0'
-            displayName: use node 12.13.0
-            timeoutInMinutes: 2
+      pool:
+          vmImage: 'ubuntu-16.04'
 
-          - task: Bash@3
-            displayName: Install adbkit-apkreader
-            inputs:
-              targetType: 'inline'
-              script: npm install adbkit-apkreader
+      steps:
+          - template: test-appium-script.yaml
 
-          - task: Bash@3
-            displayName: Install appium-adb
-            inputs:
-              targetType: 'inline'
-              script: npm install appium-adb
+    - job: 'windows_testing'
 
-          - task: Bash@3
-            displayName: Run appium script
-            inputs:
-              targetType: 'inline'
-              script: node $(System.DefaultWorkingDirectory)/appium.js
-              workingDirectory: $(System.DefaultWorkingDirectory)
+      pool:
+          vmImage: 'windows-2019'
+
+      steps:
+          - template: test-appium-script.yaml
+
