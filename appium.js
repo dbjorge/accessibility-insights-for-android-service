@@ -3,7 +3,9 @@ const util = require("util");
 const path = require("path");
 const apkReader = require("adbkit-apkreader");
 const getPort = require('get-port');
-
+const axios = require('axios');
+const fs = require('fs');
+const jsondiffpatch = require('jsondiffpatch');
 const packageName = "com.microsoft.accessibilityinsightsforandroidservice";
 const serviceName = `${packageName}/.AccessibilityInsightsForAndroidService`;
 
@@ -101,6 +103,81 @@ async function run() {
   });
 
   await getForwardedPorts(adb);
+
+  await allowScreencast(adb);
+
+  await setupSunflower(adb);
+
+  await sleep(5000);
+
+  await runTest(availablePort);
+}
+
+async function runTest(availablePort) {
+  console.log("Testing endpoints:");
+  const transientSnapshotKeys = ["screenshot", "analysisTimestamp", "axeViewId"];
+  const differ = jsondiffpatch.create({
+      propertyFilter: (name) => !transientSnapshotKeys.includes(name),
+      objectHash: (obj, index) => {
+          var copied = Object.assign({}, obj);
+          transientSnapshotKeys.forEach(k => delete copied[k]);
+          return JSON.stringify(copied) || `$$index${index}` // for unsorted axe rule results
+      },
+  });
+  const endpoints = [
+      {
+          url: 'AccessibilityInsights/config',
+          snapshot: 'sunflower-config.snapshot',
+      }, 
+      {
+          url: 'AccessibilityInsights/result',
+          snapshot: 'sunflower-result.snapshot',
+      },
+  ];
+
+  for (const e of endpoints) {
+      console.log(`GET ${e.url}`);
+      try {
+          const result = await axios.get(`http://localhost:${availablePort}/${e.url}`);
+
+          if (process.argv.includes("--serialize")) {
+              fs.writeFileSync(`this-${e.snapshot}`, JSON.stringify(result.data, null, 4));
+              console.log(`saved file this-${e.snapshot}`);
+          }
+
+          const snapshot = JSON.parse(fs.readFileSync(e.snapshot));
+          var delta = differ.diff(snapshot, result.data);
+          console.log(jsondiffpatch.formatters.console.format(delta));
+
+          if (process.argv.includes("--update")) {
+              fs.writeFileSync(e.snapshot, JSON.stringify(result.data, null, 4));
+              console.log(`updated snapshot at ${e.snapshot}`);
+          }
+      } catch (e) {
+          console.log(e);
+      }
+  }
+};
+
+async function setupSunflower(adb) {
+  const sunflowerPath = path.resolve(
+    `${__dirname}/Sunflower_demo.apk`
+  );
+  await adb.install(sunflowerPath);
+
+  await adb.shell([
+    "am", 
+    "start", 
+    "-n", 
+    "com.google.samples.apps.sunflower/.GardenActivity"
+  ]);
+}
+
+async function allowScreencast(adb) {
+  // https://developer.android.com/reference/android/view/KeyEvent#KEYCODE_ENTER
+  await adb.keyevent(61); // KEYCODE_TAB
+  await adb.keyevent(61); // KEYCODE_TAB
+  await adb.keyevent(66); // KEYCODE_ENTER
 }
 
 async function removeForwardedPorts(adb) {

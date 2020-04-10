@@ -6,7 +6,9 @@
   "dependencies": {
     "adbkit-apkreader": "^3.2.0",
     "appium-adb": "^7.28.1",
-    "get-port": "^5.1.1"
+    "axios": "^0.19.2",
+    "get-port": "^5.1.1",
+    "jsondiffpatch": "^0.4.1"
   },
   "devDependencies": {},
   "scripts": {
