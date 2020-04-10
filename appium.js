@@ -2,7 +2,7 @@ const appium = require("appium-adb");
 const util = require("util");
 const path = require("path");
 const apkReader = require("adbkit-apkreader");
-const getPort = require('get-port');
+const getPort = require("get-port");
 
 const packageName = "com.microsoft.accessibilityinsightsforandroidservice";
 const serviceName = `${packageName}/.AccessibilityInsightsForAndroidService`;
@@ -12,14 +12,6 @@ async function run() {
   const version = await adb.getAdbVersion();
 
   console.log("adb version: " + util.inspect(version));
-
-  console.log("current working directory", process.cwd());
-  console.log("__dirname", __dirname);
-  console.log("__filename", __filename);
-  console.log(
-    "process.env.SYSTEM_DEFAULTWORKINGDIRECTORY",
-    process.env.SYSTEM_DEFAULTWORKINGDIRECTORY
-  );
 
   const apkPath = path.resolve(
     `${__dirname}/AccessibilityInsightsForAndroidService/app/build/outputs/apk/debug/app-debug.apk`
@@ -33,6 +25,21 @@ async function run() {
     const content = await manifest.readManifest();
     console.log(`manifest content \n ${util.inspect(content)}`);
   });
+
+  await runWithCatch(async () => {
+    console.log(
+      "select device. We need to do this if there are multiple devices connected"
+    );
+
+    const devices = await adb.getDevicesWithRetry(); // or adb.getConnectedDevices()
+    console.log(`found connected devices - `, util.inspect(devices));
+
+    console.log("selecting the first device ", devices[0]);
+
+    await adb.setDeviceId(devices[0].udid);
+  });
+
+  await printApiLevel(adb);
 
   await runWithCatch(async () => {
     let response = await adb.isAppInstalled(packageName);
@@ -85,7 +92,7 @@ async function run() {
   });
 
   await sleep(5000);
-  
+
   await checkIfServiceIsRunning(adb);
 
   await grantScreenShotPermission(adb);
@@ -93,28 +100,38 @@ async function run() {
   await removeForwardedPorts(adb);
 
   await runWithCatch(async () => {
-    console.log("Forwarding port")
+    console.log("Forwarding port");
     const availablePort = await getPort();
     console.log("available port fetched - ", availablePort);
 
     await adb.forwardPort(availablePort, 62442);
 
-    console.log(`##vso[task.setvariable variable=aiserviceport]${availablePort}`);
+    console.log(
+      `##vso[task.setvariable variable=aiserviceport]${availablePort}`
+    );
   });
 
   await getForwardedPorts(adb);
+}
+
+async function printApiLevel(adb) {
+  await runWithCatch(async () => {
+    console.log("Fetching device api level");
+    const level = await adb.shell(["getprop", "ro.build.version.sdk"]);
+    console.log(`Api level: ${level}`);
+  });
 }
 
 async function removeForwardedPorts(adb) {
   await runWithCatch(async () => {
     const portsInfo = await getForwardedPorts(adb);
 
-    for(let i = 0; i < portsInfo.length; i++) {
-      let portInfoParts = portsInfo[i].split(' ');
+    for (let i = 0; i < portsInfo.length; i++) {
+      let portInfoParts = portsInfo[i].split(" ");
       let pcPort = portInfoParts[1].substring(4);
       let devicePort = portInfoParts[2].substring(4);
 
-      if(devicePort === '62442') {
+      if (devicePort === "62442") {
         console.log(`removing port forward for pc port ${pcPort}`);
         await adb.removePortForward(pcPort);
       }
@@ -125,36 +142,27 @@ async function removeForwardedPorts(adb) {
 async function grantScreenShotPermission(adb) {
   return await runWithCatch(async () => {
     console.log("Pressing tab to select cancel");
-    await adb.shell([
-      "input",
-      "keyevent",
-      "61",
-    ]);
+    await adb.shell(["input", "keyevent", "61"]);
     await sleep(1000);
-    
+
     console.log("Pressing tab to select start now");
-    await adb.shell([
-      "input",
-      "keyevent",
-      "61",
-    ]);
+    await adb.shell(["input", "keyevent", "61"]);
     await sleep(1000);
 
     console.log("Pressing enter to click start now");
-    await adb.shell([
-      "input",
-      "keyevent",
-      "66",
-    ]);
+    await adb.shell(["input", "keyevent", "66"]);
     await sleep(1000);
   });
 }
 
 async function getForwardedPorts(adb) {
   return await runWithCatch(async () => {
-    console.log('list all forwarded ports');
+    console.log("list all forwarded ports");
     const deviceForwardedPorts = await adb.getForwardList();
-    console.log("Current device forwarded ports", util.inspect(deviceForwardedPorts));
+    console.log(
+      "Current device forwarded ports",
+      util.inspect(deviceForwardedPorts)
+    );
 
     return deviceForwardedPorts;
   });
