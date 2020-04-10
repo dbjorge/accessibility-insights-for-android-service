@@ -21,7 +21,8 @@ async function run() {
     console.log(`apk path ${apkPath}`);
 
     const packageName = 'com.microsoft.accessibilityinsightsforandroidservice';
-
+    const serviceName = `${packageName}/.AccessibilityInsightsForAndroidService`;
+    
     await runWithCatch(async () => {
         console.log('reading manifest file');
         const manifest = await apkReader.open(apkPath);
@@ -73,7 +74,7 @@ async function run() {
             'put',
             'secure',
             'enabled_accessibility_services',
-            'com.microsoft.accessibilityinsightsforandroidservice/com.microsoft.accessibilityinsightsforandroidservice.AccessibilityInsightsForAndroidService',
+            serviceName,
         ]);
 
         console.log(`start service response - ${util.inspect(response)}`);
@@ -89,7 +90,7 @@ async function checkIfServiceIsRunning(adb) {
             'dumpsys',
             'activity',
             'services',
-            'com.microsoft.accessibilityinsightsforandroidservice/com.microsoft.accessibilityinsightsforandroidservice.AccessibilityInsightsForAndroidService',
+            packageName,
         ]);
 
         console.log(`Is Service running response - ${response}\n`);
