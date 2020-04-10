@@ -34,7 +34,6 @@ jobs:
               filePath: $(System.DefaultWorkingDirectory)/pipeline/start-emulator.sh
           
           - task: NodeTool@0
-            displayName: Install node
             inputs:
                 versionSpec: '12.13.0'
             displayName: use node 12.13.0
@@ -57,3 +56,4 @@ jobs:
             inputs:
               targetType: 'inline'
               script: node $(System.DefaultWorkingDirectory)/appium.js
+              workingDirectory: $(System.DefaultWorkingDirectory)

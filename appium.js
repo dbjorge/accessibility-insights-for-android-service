@@ -9,10 +9,16 @@ async function run() {
 
     console.log('adb version: ' + util.inspect(version));
 
+    console.log("current working directory", process.cwd());
+    console.log("__dirname", __dirname);
+    console.log("__filename", __filename);
+    console.log("process.env.SYSTEM_DEFAULTWORKINGDIRECTORY", process.env.SYSTEM_DEFAULTWORKINGDIRECTORY);
+
     const apkPath = path.resolve(
-        __dirname,
-        '/AccessibilityInsightsForAndroidService/app/build/outputs/apk/debug/app-debug.apk',
+        `${__dirname}/AccessibilityInsightsForAndroidService/app/build/outputs/apk/debug/app-debug.apk`,
     );
+
+    console.log(`apk path ${apkPath}`);
 
     const packageName = 'com.microsoft.accessibilityinsightsforandroidservice';
 
