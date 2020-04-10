@@ -8,7 +8,7 @@ jobs:
     - job: 'gradlew_build'
 
       pool:
-          vmImage: 'windows-latest'
+          vmImage: 'macOS-10.14'
 
       steps:
           - template: clone-src-with-deps.yaml
@@ -26,3 +26,29 @@ jobs:
               publishJUnitResults: true
               testResultsFiles: '**/TEST-*.xml'
               tasks: 'build'
+
+          - task: Bash@3
+            inputs:
+              targetType: 'filePath'
+              filePath: $(System.DefaultWorkingDirectory)/pipeline/start-emulator.sh
+          
+          - task: NodeTool@0
+            inputs:
+                versionSpec: '12.13.0'
+            displayName: use node 12.13.0
+            timeoutInMinutes: 2
+
+          - task: Bash@3
+            inputs:
+              targetType: 'inline'
+              script: npm install adbkit-apkreader
+
+          - task: Bash@3
+            inputs:
+              targetType: 'inline'
+              script: npm install appium-adb
+
+          - task: Bash@3
+            inputs:
+              targetType: 'inline'
+              script: node $(System.DefaultWorkingDirectory)/appium.js
