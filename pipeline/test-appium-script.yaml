@@ -38,17 +38,17 @@ steps:
     displayName: use node 12.13.0
     timeoutInMinutes: 2
 
-  - task: Bash@3
-    displayName: Install adbkit-apkreader
-    inputs:
-      targetType: 'inline'
-      script: npm install adbkit-apkreader
+  - script: npm install -g npm@6.11.1
+      displayName: install npm 6.11.1
+      timeoutInMinutes: 5
 
-  - task: Bash@3
-    displayName: Install appium-adb
-    inputs:
-      targetType: 'inline'
-      script: npm install appium-adb
+  - script: npm install yarn@1.17.3 -g
+      displayName: install yarn as a global dependency
+      timeoutInMinutes: 1
+
+  - script: yarn install --frozen-lockfile
+      displayName: install packages and dependencies
+      timeoutInMinutes: 10
 
   - task: Bash@3
     displayName: Run appium script

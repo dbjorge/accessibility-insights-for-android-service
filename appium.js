@@ -2,6 +2,7 @@ const appium = require("appium-adb");
 const util = require("util");
 const path = require("path");
 const apkReader = require("adbkit-apkreader");
+const getPort = require('get-port');
 
 const packageName = "com.microsoft.accessibilityinsightsforandroidservice";
 const serviceName = `${packageName}/.AccessibilityInsightsForAndroidService`;
@@ -61,11 +62,11 @@ async function run() {
   //     console.log(`installOrUpgrade - ${util.inspect(response)}`);
   // });
 
-  await runWithCatch(async () => {
-    console.log("Grant all permissions");
-    const response = await adb.grantAllPermissions(packageName);
-    console.log(`Grant permission Response - ${util.inspect(response)}`);
-  });
+  // await runWithCatch(async () => {
+  //   console.log("Grant all permissions");
+  //   const response = await adb.grantAllPermissions(packageName);
+  //   console.log(`Grant permission Response - ${util.inspect(response)}`);
+  // });
 
   await checkIfServiceIsRunning(adb);
 
@@ -86,10 +87,50 @@ async function run() {
   await sleep(5000);
   
   await checkIfServiceIsRunning(adb);
+
+  await removeForwardedPorts(adb);
+
+  await runWithCatch(async () => {
+    console.log("Forwarding port")
+    const availablePort = await getPort();
+    console.log("available port fetched - ", availablePort);
+
+    await adb.forwardPort(availablePort, 62442);
+  });
+
+  await getForwardedPorts(adb);
 }
 
-function sleep(millis) {
-  return new Promise((resolve) => setTimeout(resolve, millis));
+async function removeForwardedPorts(adb) {
+  await runWithCatch(async () => {
+    const portsInfo = await getForwardedPorts(adb);
+
+    for(let i = 0; i < portsInfo.length; i++) {
+      let portInfoParts = portsInfo[i].split(' ');
+      let pcPort = portInfoParts[1].substring(4);
+      let devicePort = portInfoParts[2].substring(4);
+
+      if(devicePort === '62442') {
+        console.log(`removing port forward for pc port ${pcPort}`);
+        await adb.removePortForward(pcPort);
+      }
+    }
+  });
+}
+
+async function getForwardedPorts(adb) {
+  return await runWithCatch(async () => {
+    console.log('list all forwarded ports');
+    const deviceForwardedPorts = await adb.getForwardList();
+    console.log("Current device forwarded ports", util.inspect(deviceForwardedPorts));
+
+    return deviceForwardedPorts;
+  });
+}
+
+async function sleep(milliseconds) {
+  console.log(`Sleeping ${milliseconds} milliseconds`);
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
 async function checkIfServiceIsRunning(adb) {
@@ -112,9 +153,10 @@ async function checkIfServiceIsRunning(adb) {
 async function runWithCatch(callback) {
   try {
     console.log("\n\n");
-    await callback();
+    return await callback();
   } catch (e) {
     console.log(`Exception thrown! ===> ${util.inspect(e)}`);
   }
 }
+
 run();

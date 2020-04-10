@@ -1,0 +1,25 @@
+{
+  "name": "accessibility-insights-for-android-service",
+  "version": "1.0.0",
+  "description": "<!-- Copyright (c) Microsoft Corporation. All rights reserved. Licensed under the MIT License. -->",
+  "main": "appium.js",
+  "dependencies": {
+    "adbkit-apkreader": "^3.2.0",
+    "appium-adb": "^7.28.1",
+    "get-port": "^5.1.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/microsoft/accessibility-insights-for-android-service.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/microsoft/accessibility-insights-for-android-service/issues"
+  },
+  "homepage": "https://github.com/microsoft/accessibility-insights-for-android-service#readme"
+}

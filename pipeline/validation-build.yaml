@@ -12,20 +12,3 @@ jobs:
 
       steps:
           - template: test-appium-script.yaml
-
-    - job: 'ubuntu_testing'
-
-      pool:
-          vmImage: 'ubuntu-16.04'
-
-      steps:
-          - template: test-appium-script.yaml
-
-    - job: 'windows_testing'
-
-      pool:
-          vmImage: 'windows-2019'
-
-      steps:
-          - template: test-appium-script.yaml
-
