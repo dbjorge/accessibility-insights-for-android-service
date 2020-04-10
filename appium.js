@@ -124,6 +124,11 @@ async function printApiLevel(adb) {
 
 async function removeForwardedPorts(adb) {
   await runWithCatch(async () => {
+    console.log(
+      "We can either use the existing port if available or \
+    remove the previously configured port & create a new one. \
+    For this spike, choosing to remove the existing port."
+    );
     const portsInfo = await getForwardedPorts(adb);
 
     for (let i = 0; i < portsInfo.length; i++) {
