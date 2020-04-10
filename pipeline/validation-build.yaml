@@ -28,27 +28,32 @@ jobs:
               tasks: 'build'
 
           - task: Bash@3
+            displayName: start emulator
             inputs:
               targetType: 'filePath'
               filePath: $(System.DefaultWorkingDirectory)/pipeline/start-emulator.sh
           
           - task: NodeTool@0
+            displayName: Install node
             inputs:
                 versionSpec: '12.13.0'
             displayName: use node 12.13.0
             timeoutInMinutes: 2
 
           - task: Bash@3
+            displayName: Install adbkit-apkreader
             inputs:
               targetType: 'inline'
               script: npm install adbkit-apkreader
 
           - task: Bash@3
+            displayName: Install appium-adb
             inputs:
               targetType: 'inline'
               script: npm install appium-adb
 
           - task: Bash@3
+            displayName: Run appium script
             inputs:
               targetType: 'inline'
               script: node $(System.DefaultWorkingDirectory)/appium.js
