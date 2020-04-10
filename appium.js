@@ -46,6 +46,11 @@ async function run() {
         console.log(`Install Response - ${util.inspect(response)}`);
     });
 
+    await runWithCatch(async () => {
+        let response = await adb.isAppInstalled(packageName);
+        console.log(`is app installed - ${response}`);
+    });
+
     // await runWithCatch(async () => {
     //     console.log('installOrUpgrade apk');
     //     const response = await adb.installOrUpgrade(apkPath);
