@@ -91,7 +91,7 @@ async function checkIfServiceIsRunning(adb) {
             'dumpsys',
             'activity',
             'services',
-            packageName,
+            serviceName,
         ]);
 
         console.log(`Is Service running response - ${response}\n`);
