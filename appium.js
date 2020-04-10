@@ -96,6 +96,8 @@ async function run() {
     console.log("available port fetched - ", availablePort);
 
     await adb.forwardPort(availablePort, 62442);
+
+    console.log(`##vso[task.setvariable variable=aiserviceport]${availablePort}`);
   });
 
   await getForwardedPorts(adb);

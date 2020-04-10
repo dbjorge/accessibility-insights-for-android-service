@@ -56,3 +56,10 @@ steps:
       targetType: 'inline'
       script: node appium.js
       workingDirectory: $(System.DefaultWorkingDirectory)
+
+  - task: Bash@3
+    displayName: Print environment variables
+    inputs:
+      targetType: 'inline'
+      script: printenv
+      workingDirectory: $(System.DefaultWorkingDirectory)
