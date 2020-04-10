@@ -3,6 +3,9 @@ const util = require('util');
 const path = require('path');
 const apkReader = require('adbkit-apkreader');
 
+const packageName = 'com.microsoft.accessibilityinsightsforandroidservice';
+const serviceName = `${packageName}/.AccessibilityInsightsForAndroidService`;
+
 async function run() {
     const adb = await appium.ADB.createADB();
     const version = await adb.getAdbVersion();
@@ -20,9 +23,7 @@ async function run() {
 
     console.log(`apk path ${apkPath}`);
 
-    const packageName = 'com.microsoft.accessibilityinsightsforandroidservice';
-    const serviceName = `${packageName}/.AccessibilityInsightsForAndroidService`;
-    
+
     await runWithCatch(async () => {
         console.log('reading manifest file');
         const manifest = await apkReader.open(apkPath);
