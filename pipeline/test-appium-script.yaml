@@ -46,5 +46,5 @@ steps:
     displayName: Run appium script
     inputs:
       targetType: 'inline'
-      script: node $(System.DefaultWorkingDirectory)/appium.js
+      script: node appium.js
       workingDirectory: $(System.DefaultWorkingDirectory)
