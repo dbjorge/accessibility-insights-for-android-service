@@ -2,7 +2,15 @@
 # Licensed under the MIT License.
 
 steps:
+  - task: Bash@3
+    displayName: Print environment variables
+    inputs:
+      targetType: 'inline'
+      script: printenv
+      workingDirectory: $(System.DefaultWorkingDirectory)
+
   - template: clone-src-with-deps.yaml
+
 
   - task: Gradle@2
     displayName: build and test dev ai-android service
