@@ -88,6 +88,8 @@ async function run() {
   
   await checkIfServiceIsRunning(adb);
 
+  await grantScreenShotPermission(adb);
+
   await removeForwardedPorts(adb);
 
   await runWithCatch(async () => {
@@ -117,6 +119,34 @@ async function removeForwardedPorts(adb) {
         await adb.removePortForward(pcPort);
       }
     }
+  });
+}
+
+async function grantScreenShotPermission(adb) {
+  return await runWithCatch(async () => {
+    console.log("Pressing tab to select cancel");
+    await adb.shell([
+      "input",
+      "keyevent",
+      "61",
+    ]);
+    await sleep(1000);
+    
+    console.log("Pressing tab to select start now");
+    await adb.shell([
+      "input",
+      "keyevent",
+      "61",
+    ]);
+    await sleep(1000);
+
+    console.log("Pressing enter to click start now");
+    await adb.shell([
+      "input",
+      "keyevent",
+      "66",
+    ]);
+    await sleep(1000);
   });
 }
 
