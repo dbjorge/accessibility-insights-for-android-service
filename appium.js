@@ -91,7 +91,7 @@ async function run() {
     console.log(`start service response - ${util.inspect(response)}`);
   });
 
-  await sleep(5000);
+  await waitForPermissionDialog(adb);
 
   await checkIfServiceIsRunning(adb);
 
@@ -144,6 +144,17 @@ async function removeForwardedPorts(adb) {
   });
 }
 
+async function waitForPermissionDialog(adb) {
+  return await runWithCatch(async () => {
+    console.log("Waiting for permission dialog to show up");
+    await adb.waitForActivity(
+      "com.android.systemui",
+      ".media.MediaProjectionPermissionActivity",
+      20000
+    );
+  });
+}
+
 async function grantScreenShotPermission(adb) {
   return await runWithCatch(async () => {
     console.log("Pressing tab to select cancel");
@@ -179,6 +190,7 @@ async function sleep(milliseconds) {
 }
 
 async function checkIfServiceIsRunning(adb) {
+  // We may have to wait or poll to give some time to start the service after enabling
   await runWithCatch(async () => {
     console.log("Checking if service is running");
     let response = await adb.shell([
