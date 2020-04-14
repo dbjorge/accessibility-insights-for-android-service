@@ -15,14 +15,6 @@ async function run() {
 
   console.log("adb version: " + util.inspect(version));
 
-  console.log("current working directory", process.cwd());
-  console.log("__dirname", __dirname);
-  console.log("__filename", __filename);
-  console.log(
-    "process.env.SYSTEM_DEFAULTWORKINGDIRECTORY",
-    process.env.SYSTEM_DEFAULTWORKINGDIRECTORY
-  );
-
   const apkPath = path.resolve(
     `${__dirname}/AccessibilityInsightsForAndroidService/app/build/outputs/apk/debug/app-debug.apk`
   );
@@ -35,6 +27,21 @@ async function run() {
     const content = await manifest.readManifest();
     console.log(`manifest content \n ${util.inspect(content)}`);
   });
+
+  await runWithCatch(async () => {
+    console.log(
+      "select device. We need to do this if there are multiple devices connected"
+    );
+
+    const devices = await adb.getDevicesWithRetry(); // or adb.getConnectedDevices()
+    console.log(`found connected devices - `, util.inspect(devices));
+
+    console.log("selecting the first device ", devices[0]);
+
+    await adb.setDeviceId(devices[0].udid);
+  });
+
+  await printApiLevel(adb);
 
   await runWithCatch(async () => {
     let response = await adb.isAppInstalled(packageName);
@@ -86,8 +93,8 @@ async function run() {
     console.log(`start service response - ${util.inspect(response)}`);
   });
 
-  await sleep(5000);
-  
+  await waitForPermissionDialog(adb);
+
   await checkIfServiceIsRunning(adb);
 
   await grantScreenShotPermission(adb);
@@ -174,20 +181,44 @@ async function setupSunflower(adb) {
   ]);
 }
 
+async function printApiLevel(adb) {
+  await runWithCatch(async () => {
+    console.log("Fetching device api level");
+    const level = await adb.shell(["getprop", "ro.build.version.sdk"]);
+    console.log(`Api level: ${level}`);
+  });
+}
+
 async function removeForwardedPorts(adb) {
   await runWithCatch(async () => {
+    console.log(
+      "We can either use the existing port if available or \
+    remove the previously configured port & create a new one. \
+    For this spike, choosing to remove the existing port."
+    );
     const portsInfo = await getForwardedPorts(adb);
 
-    for(let i = 0; i < portsInfo.length; i++) {
-      let portInfoParts = portsInfo[i].split(' ');
+    for (let i = 0; i < portsInfo.length; i++) {
+      let portInfoParts = portsInfo[i].split(" ");
       let pcPort = portInfoParts[1].substring(4);
       let devicePort = portInfoParts[2].substring(4);
 
-      if(devicePort === '62442') {
+      if (devicePort === "62442") {
         console.log(`removing port forward for pc port ${pcPort}`);
         await adb.removePortForward(pcPort);
       }
     }
+  });
+}
+
+async function waitForPermissionDialog(adb) {
+  return await runWithCatch(async () => {
+    console.log("Waiting for permission dialog to show up");
+    await adb.waitForActivity(
+      "com.android.systemui",
+      ".media.MediaProjectionPermissionActivity",
+      20000
+    );
   });
 }
 
@@ -206,9 +237,12 @@ async function grantScreenShotPermission(adb) {
 
 async function getForwardedPorts(adb) {
   return await runWithCatch(async () => {
-    console.log('list all forwarded ports');
+    console.log("list all forwarded ports");
     const deviceForwardedPorts = await adb.getForwardList();
-    console.log("Current device forwarded ports", util.inspect(deviceForwardedPorts));
+    console.log(
+      "Current device forwarded ports",
+      util.inspect(deviceForwardedPorts)
+    );
 
     return deviceForwardedPorts;
   });
@@ -220,6 +254,7 @@ async function sleep(milliseconds) {
 }
 
 async function checkIfServiceIsRunning(adb) {
+  // We may have to wait or poll to give some time to start the service after enabling
   await runWithCatch(async () => {
     console.log("Checking if service is running");
     let response = await adb.shell([
