@@ -114,7 +114,7 @@ async function run() {
 
   await getForwardedPorts(adb);
 
-  await setupSunflower(adb);
+  //await setupSunflower(adb);
 
   await sleep(5000);
 
