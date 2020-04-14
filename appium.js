@@ -94,7 +94,7 @@ async function run() {
 
   await removeForwardedPorts(adb);
 
-  await runWithCatch(async () => {
+  const port = await runWithCatch(async () => {
     console.log("Forwarding port")
     const availablePort = await getPort();
     console.log("available port fetched - ", availablePort);
@@ -102,17 +102,16 @@ async function run() {
     await adb.forwardPort(availablePort, 62442);
 
     console.log(`##vso[task.setvariable variable=aiserviceport]${availablePort}`);
+    return availablePort;
   });
 
   await getForwardedPorts(adb);
-
-  await allowScreencast(adb);
 
   await setupSunflower(adb);
 
   await sleep(5000);
 
-  await runTest(availablePort);
+  await runTest(port);
 }
 
 async function runTest(availablePort) {
@@ -175,13 +174,6 @@ async function setupSunflower(adb) {
   ]);
 }
 
-async function allowScreencast(adb) {
-  // https://developer.android.com/reference/android/view/KeyEvent#KEYCODE_ENTER
-  await adb.keyevent(61); // KEYCODE_TAB
-  await adb.keyevent(61); // KEYCODE_TAB
-  await adb.keyevent(66); // KEYCODE_ENTER
-}
-
 async function removeForwardedPorts(adb) {
   await runWithCatch(async () => {
     const portsInfo = await getForwardedPorts(adb);
@@ -200,31 +192,16 @@ async function removeForwardedPorts(adb) {
 }
 
 async function grantScreenShotPermission(adb) {
-  return await runWithCatch(async () => {
-    console.log("Pressing tab to select cancel");
-    await adb.shell([
-      "input",
-      "keyevent",
-      "61",
-    ]);
-    await sleep(1000);
-    
-    console.log("Pressing tab to select start now");
-    await adb.shell([
-      "input",
-      "keyevent",
-      "61",
-    ]);
-    await sleep(1000);
-
-    console.log("Pressing enter to click start now");
-    await adb.shell([
-      "input",
-      "keyevent",
-      "66",
-    ]);
-    await sleep(1000);
-  });
+  // https://developer.android.com/reference/android/view/KeyEvent#KEYCODE_ENTER
+  console.log("Pressing tab to select cancel");
+  await adb.keyevent(61); // KEYCODE_TAB
+  await sleep(1000);
+  console.log("Pressing tab to select start now");
+  await adb.keyevent(61); // KEYCODE_TAB
+  await sleep(1000);
+  console.log("Pressing enter to click start now");
+  await adb.keyevent(66); // KEYCODE_ENTER
+  await sleep(1000);
 }
 
 async function getForwardedPorts(adb) {
