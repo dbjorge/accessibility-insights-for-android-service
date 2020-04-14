@@ -99,6 +99,8 @@ async function run() {
 
   await grantScreenShotPermission(adb);
 
+  await setupSunflower(adb);
+
   await removeForwardedPorts(adb);
 
   const port = await runWithCatch(async () => {
@@ -113,8 +115,6 @@ async function run() {
   });
 
   await getForwardedPorts(adb);
-
-  //await setupSunflower(adb);
 
   await sleep(5000);
 
