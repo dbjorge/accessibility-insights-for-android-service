@@ -171,7 +171,8 @@ async function setupSunflower(adb) {
   const sunflowerPath = path.resolve(
     `${__dirname}/Sunflower_demo.apk`
   );
-  await adb.install(sunflowerPath);
+
+  await runWithCatch(await adb.install(sunflowerPath));
 
   await adb.shell([
     "am", 
