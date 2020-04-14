@@ -99,8 +99,6 @@ async function run() {
 
   await grantScreenShotPermission(adb);
 
-  await setupSunflower(adb);
-
   await removeForwardedPorts(adb);
 
   const port = await runWithCatch(async () => {
@@ -116,7 +114,7 @@ async function run() {
 
   await getForwardedPorts(adb);
 
-  await sleep(5000);
+  await setupSunflower(adb);
 
   await runTest(port);
 }
@@ -180,6 +178,18 @@ async function setupSunflower(adb) {
     "-n", 
     "com.google.samples.apps.sunflower/.GardenActivity"
   ]);
+
+  await runWithCatch(async () => {
+    console.log("Waiting for sunflower to show up");
+    await adb.waitForActivity(
+      "com.google.samples.apps.sunflower",
+      ".GardenActivity",
+      20000
+    );
+  });
+
+  // time between focused activity and proper UI showing up
+  await sleep(3000);
 }
 
 async function printApiLevel(adb) {
