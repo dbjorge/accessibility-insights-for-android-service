@@ -189,7 +189,7 @@ async function setupSunflower(adb) {
   });
 
   // time between focused activity and proper UI showing up
-  await sleep(3000);
+  await sleep(10000);
 }
 
 async function printApiLevel(adb) {
