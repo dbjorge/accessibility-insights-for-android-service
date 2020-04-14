@@ -172,7 +172,7 @@ async function setupSunflower(adb) {
     `${__dirname}/Sunflower_demo.apk`
   );
 
-  await runWithCatch(() => await adb.install(sunflowerPath));
+  await runWithCatch(async () => await adb.install(sunflowerPath));
 
   await adb.shell([
     "am", 
