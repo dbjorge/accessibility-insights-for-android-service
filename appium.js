@@ -21,14 +21,14 @@ async function run() {
 
   console.log(`apk path ${apkPath}`);
 
-  await runWithCatch(async () => {
+  await runWithElapsedTimeLogging(async () => {
     console.log("reading manifest file");
     const manifest = await apkReader.open(apkPath);
     const content = await manifest.readManifest();
     console.log(`manifest content \n ${util.inspect(content)}`);
   });
 
-  await runWithCatch(async () => {
+  await runWithElapsedTimeLogging(async () => {
     console.log(
       "select device. We need to do this if there are multiple devices connected"
     );
@@ -43,7 +43,7 @@ async function run() {
 
   await printApiLevel(adb);
 
-  await runWithCatch(async () => {
+  await runWithElapsedTimeLogging(async () => {
     let response = await adb.isAppInstalled(packageName);
     console.log(`is app installed - ${response}`);
 
@@ -54,13 +54,13 @@ async function run() {
     }
   });
 
-  await runWithCatch(async () => {
+  await runWithElapsedTimeLogging(async () => {
     console.log("Installing apk");
     const response = await adb.install(apkPath);
     console.log(`Install Response - ${util.inspect(response)}`);
   });
 
-  await runWithCatch(async () => {
+  await runWithElapsedTimeLogging(async () => {
     let response = await adb.isAppInstalled(packageName);
     console.log(`is app installed - ${response}`);
   });
@@ -79,7 +79,7 @@ async function run() {
 
   await checkIfServiceIsRunning(adb);
 
-  await runWithCatch(async () => {
+  await runWithElapsedTimeLogging(async () => {
     console.log("Start service");
     //adb shell settings put secure enabled_accessibility_services com.microsoft.accessibilityinsightsforandroidservice/com.microsoft.accessibilityinsightsforandroidservice.AccessibilityInsightsForAndroidService
     const response = await adb.shell([
@@ -101,7 +101,7 @@ async function run() {
 
   await removeForwardedPorts(adb);
 
-  const port = await runWithCatch(async () => {
+  const port = await runWithElapsedTimeLogging(async () => {
     console.log("Forwarding port")
     const availablePort = await getPort();
     console.log("available port fetched - ", availablePort);
@@ -170,7 +170,7 @@ async function setupSunflower(adb) {
     `${__dirname}/Sunflower_demo.apk`
   );
 
-  await runWithCatch(async () => await adb.install(sunflowerPath));
+  await runWithElapsedTimeLogging(async () => await adb.install(sunflowerPath));
 
   await adb.shell([
     "am", 
@@ -179,7 +179,7 @@ async function setupSunflower(adb) {
     "com.google.samples.apps.sunflower/.GardenActivity"
   ]);
 
-  await runWithCatch(async () => {
+  await runWithElapsedTimeLogging(async () => {
     console.log("Waiting for sunflower to show up");
     await adb.waitForActivity(
       "com.google.samples.apps.sunflower",
@@ -193,7 +193,7 @@ async function setupSunflower(adb) {
 }
 
 async function printApiLevel(adb) {
-  await runWithCatch(async () => {
+  await runWithElapsedTimeLogging(async () => {
     console.log("Fetching device api level");
     const level = await adb.shell(["getprop", "ro.build.version.sdk"]);
     console.log(`Api level: ${level}`);
@@ -201,7 +201,7 @@ async function printApiLevel(adb) {
 }
 
 async function removeForwardedPorts(adb) {
-  await runWithCatch(async () => {
+  await runWithElapsedTimeLogging(async () => {
     console.log(
       "We can either use the existing port if available or \
     remove the previously configured port & create a new one. \
@@ -223,7 +223,7 @@ async function removeForwardedPorts(adb) {
 }
 
 async function waitForPermissionDialog(adb) {
-  return await runWithCatch(async () => {
+  return await runWithElapsedTimeLogging(async () => {
     console.log("Waiting for permission dialog to show up");
     await adb.waitForActivity(
       "com.android.systemui",
@@ -247,7 +247,7 @@ async function grantScreenShotPermission(adb) {
 }
 
 async function getForwardedPorts(adb) {
-  return await runWithCatch(async () => {
+  return await runWithElapsedTimeLogging(async () => {
     console.log("list all forwarded ports");
     const deviceForwardedPorts = await adb.getForwardList();
     console.log(
@@ -266,7 +266,7 @@ async function sleep(milliseconds) {
 
 async function checkIfServiceIsRunning(adb) {
   // We may have to wait or poll to give some time to start the service after enabling
-  await runWithCatch(async () => {
+  await runWithElapsedTimeLogging(async () => {
     console.log("Checking if service is running");
     let response = await adb.shell([
       "dumpsys",
@@ -282,13 +282,19 @@ async function checkIfServiceIsRunning(adb) {
   });
 }
 
-async function runWithCatch(callback) {
+async function runWithElapsedTimeLogging(callback) {
+  let startTime = new Date();
+  let response = undefined;
+
   try {
     console.log("\n\n");
-    return await callback();
+    response = await callback();
   } catch (e) {
     console.log(`Exception thrown! ===> ${util.inspect(e)}`);
   }
+
+  console.log(`\n>>> Elapsed time for the step: ${(new Date() - startTime) / 1000} seconds\n`);
+  return response;
 }
 
 run();
