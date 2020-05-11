@@ -12,3 +12,16 @@ jobs:
 
       steps:
           - template: test-appium-script.yaml
+          - task: Gradle@2
+            displayName: build and test dev ai-android service
+            inputs:
+              workingDirectory: '$(system.defaultWorkingDirectory)/AccessibilityInsightsForAndroidService'
+              gradleWrapperFile: 'AccessibilityInsightsForAndroidService/gradlew'
+              gradleOptions: '-Xmx3072m'
+              options: -S
+              javaHomeOption: 'JDKVersion'
+              jdkVersionOption: '1.8'
+              jdkArchitectureOption: 'x64'
+              publishJUnitResults: true
+              testResultsFiles: '**/TEST-*.xml'
+              tasks: 'build'
